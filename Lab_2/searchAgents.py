@@ -42,6 +42,7 @@ import time
 import search
 from copy import deepcopy
 from search import uniformCostSearch
+from search import breadthFirstSearch
 
 class GoWestAgent(Agent):
     "An agent that goes West until it can't."
@@ -347,12 +348,12 @@ class CornersProblem(search.SearchProblem):
 
             if not hitsWall:
                 nextPosition = (nextX, nextY)
-                nextVisitedCorner = deepcopy(currVisitedCorner)
+                nextVisitedCorner = deepcopy(currVisitedCorner)     # applied deepcopy because when the variable on the right changes, the variable on the left also changes 
                 if nextPosition in self.corners:
                     nextVisitedCorner[nextPosition] = True
 
                 nextState = (nextPosition, nextVisitedCorner)
-                nextNode = (nextState, action, 1)
+                nextNode = (nextState, action, 1)     # cost of 1
                 successors.append(nextNode)
 
 
@@ -390,13 +391,32 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    currPosition, currVisitedCorner = state
+    
+    unvisited_corners = []
+    for corner, visited in currVisitedCorner.items():
+        if not visited:
+            unvisited_corners.append(corner)
+
+    if not unvisited_corners:
+        return 0
+    
+    farthest_corner_distance = 0
+    for corner in unvisited_corners:
+        distance = util.manhattanDistance(currPosition, corner)
+        if distance > farthest_corner_distance:
+            farthest_corner_distance = distance
+
+    return farthest_corner_distance
+
+
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
     def __init__(self):
         self.searchFunction = lambda prob: search.aStarSearch(prob, cornersHeuristic)
         self.searchType = CornersProblem
+
 
 class FoodSearchProblem:
     """
@@ -484,7 +504,17 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    return 0
+    foodGridList = foodGrid.asList()
+
+    if not foodGridList:
+        return 0
+    
+    min_distance = 0
+    for food in foodGridList:
+        min_distance = mazeDistance(position, food, problem.startingGameState)
+    
+    return min_distance
+
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
